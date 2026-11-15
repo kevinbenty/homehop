@@ -185,6 +185,9 @@ describe("IgnavProvider request", () => {
     await new IgnavProvider("k").search([{ origin: "GOT", destination: "COK", date: "2026-12-19" }], { checkedBags: 2 });
     expect(sent.checked_bags).toBe(1);
     expect(sent.max_stops).toBe(2);
+    await new IgnavProvider("k").search([{ origin: "GOT", destination: "COK", date: "2026-12-19" }, { origin: "TRV", destination: "ARN", date: "2027-01-11" }]);
+    expect(sent.max_stops).toBeUndefined();
+    expect((sent.legs as { max_stops: number }[]).every((l) => l.max_stops === 2)).toBe(true);
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
   });
 });

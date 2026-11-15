@@ -62,13 +62,22 @@ export class IgnavProvider implements FlightProvider {
       body = { origin: a.origin, destination: a.destination, departure_date: a.date, return_date: b.date };
     } else {
       path = "search";
-      body = { legs: slices.map((s) => ({ origin: s.origin, destination: s.destination, departure_date: s.date })) };
+      // /fares/search takes max_stops per leg, not at the top level.
+      body = { legs: slices.map((s) => ({ origin: s.origin, destination: s.destination, departure_date: s.date, max_stops: 2 })) };
     }
     const res = await fetch(`${API}/${path}`, {
       method: "POST",
       headers: { "X-Api-Key": this.apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, adults: 1, cabin_class: "economy", max_stops: 2, market: this.market, ...(bags ? { checked_bags: bags } : {}) }),
-      signal: AbortSignal.timeout(25000),
+      body: JSON.stringify({
+        ...body,
+        ...(path === "search" ? {} : { max_stops: 2 }),
+        adults: 1,
+        cabin_class: "economy",
+        market: this.market,
+        ...(bags ? { checked_bags: bags } : {}),
+      }),
+      // Two-leg searches take longer on Ignav's side.
+      signal: AbortSignal.timeout(slices.length > 1 ? 40000 : 25000),
     });
     if (!res.ok) {
       const text = await res.text().catch(() => "");
