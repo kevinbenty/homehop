@@ -173,3 +173,18 @@ describe("itinerary filters", () => {
     expect(o.slices[0].checkedBags).toBe(2);
   });
 });
+
+describe("IgnavProvider request", () => {
+  it("asks for at most one checked bag", async () => {
+    const { IgnavProvider } = await import("./flights/ignav");
+    let sent: Record<string, unknown> = {};
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init: RequestInit) => {
+      sent = JSON.parse(String(init.body));
+      return new Response(JSON.stringify({ itineraries: [] }), { status: 200 });
+    }));
+    await new IgnavProvider("k").search([{ origin: "GOT", destination: "COK", date: "2026-12-19" }], { checkedBags: 2 });
+    expect(sent.checked_bags).toBe(1);
+    expect(sent.max_stops).toBe(2);
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+  });
+});

@@ -49,7 +49,8 @@ export class IgnavProvider implements FlightProvider {
   constructor(private apiKey: string, private market = "SE") {}
 
   async search(slices: SliceQuery[], opts: SearchOpts = {}): Promise<Offer[]> {
-    const bags = opts.checkedBags ?? 0;
+    // Ignav accepts at most one checked bag per seated traveller; extra bags stay estimates in the engine.
+    const bags = Math.min(opts.checkedBags ?? 0, 1);
     let path: string;
     let body: Record<string, unknown>;
     const [a, b] = slices;
