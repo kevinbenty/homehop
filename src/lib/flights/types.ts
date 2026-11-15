@@ -26,8 +26,14 @@ export interface Offer {
   source: "ignav" | "duffel" | "mock";
 }
 
+export interface SearchOpts {
+  maxResults?: number;
+  /** Checked bags the traveller needs. Providers that can price bags include them in the fare. */
+  checkedBags?: number;
+}
+
 export interface FlightProvider {
   name: "ignav" | "duffel" | "mock";
   /** Returns the cheapest offers for the given slices, cheapest first. */
-  search(slices: SliceQuery[], opts?: { maxResults?: number }): Promise<Offer[]>;
+  search(slices: SliceQuery[], opts?: SearchOpts): Promise<Offer[]>;
 }

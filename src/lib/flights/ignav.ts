@@ -1,4 +1,4 @@
-import { FlightProvider, Offer, OfferSlice, SliceQuery } from "./types";
+import { FlightProvider, Offer, OfferSlice, SearchOpts, SliceQuery } from "./types";
 
 // Ignav: self-serve live fares (https://ignav.com/docs).
 // One-way and round-trip have dedicated endpoints; /fares/search takes 1–2
@@ -25,9 +25,10 @@ function toSlice(leg: any, checkedBags: number): OfferSlice | null {
   };
 }
 
-export function normalizeIgnav(raw: any): Offer | null {
+/** `requestedBags`: checked bags asked for in the request; Ignav then includes their estimated fees in the price. */
+export function normalizeIgnav(raw: any, requestedBags = 0): Offer | null {
   const legs: any[] = raw.legs ?? [raw.outbound, raw.inbound].filter(Boolean);
-  const checked = Number(raw.bags?.checked ?? 0) || 0;
+  const checked = Math.max(Number(raw.bags?.checked ?? 0) || 0, requestedBags);
   const slices = legs.map((l) => toSlice(l, checked));
   if (!slices.length || slices.some((s) => !s)) return null;
   const price = Number(raw.price?.amount);
@@ -47,7 +48,8 @@ export class IgnavProvider implements FlightProvider {
   name = "ignav" as const;
   constructor(private apiKey: string, private market = "SE") {}
 
-  async search(slices: SliceQuery[], opts: { maxResults?: number } = {}): Promise<Offer[]> {
+  async search(slices: SliceQuery[], opts: SearchOpts = {}): Promise<Offer[]> {
+    const bags = opts.checkedBags ?? 0;
     let path: string;
     let body: Record<string, unknown>;
     const [a, b] = slices;
@@ -64,7 +66,7 @@ export class IgnavProvider implements FlightProvider {
     const res = await fetch(`${API}/${path}`, {
       method: "POST",
       headers: { "X-Api-Key": this.apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ ...body, adults: 1, cabin_class: "economy", market: this.market }),
+      body: JSON.stringify({ ...body, adults: 1, cabin_class: "economy", max_stops: 2, market: this.market, ...(bags ? { checked_bags: bags } : {}) }),
       signal: AbortSignal.timeout(25000),
     });
     if (!res.ok) {
@@ -73,9 +75,9 @@ export class IgnavProvider implements FlightProvider {
     }
     const json = await res.json();
     const offers = ((json?.itineraries ?? []) as unknown[])
-      .map(normalizeIgnav)
+      .map((it) => normalizeIgnav(it, bags))
       .filter((o): o is Offer => !!o && o.slices.length === slices.length);
     offers.sort((x, y) => x.price - y.price);
-    return offers.slice(0, opts.maxResults ?? 5);
+    return offers.slice(0, opts.maxResults ?? 10);
   }
 }

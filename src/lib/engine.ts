@@ -9,6 +9,8 @@ import { dateRange, OPEN_JAW_CHECKS, RETURN_TICKET_CHECKS, SearchInput } from ".
 export const EXTRA_BAG_EUR = 70;
 /** How much one extra hour of travel "costs" in the Best balance sort, EUR. */
 export const HOUR_VALUE_EUR = 10;
+/** Longest flight time accepted for one direction, minutes. Drops 60-hour self-transfer oddities. */
+export const MAX_SLICE_MIN = 36 * 60;
 
 export type TicketKind = "return" | "openjaw" | "separate";
 
@@ -78,7 +80,8 @@ export async function runSearch(input: SearchInput, provider: FlightProvider): P
     limit(async () => {
       callsMade++;
       try {
-        return await cachedSearch(provider, slices);
+        const offers = await cachedSearch(provider, slices, { checkedBags: input.bags });
+        return offers.filter((o) => o.slices.every((s) => s.durationMin > 0 && s.durationMin <= MAX_SLICE_MIN));
       } catch (e) {
         failedCalls++;
         console.error("flight search failed", slices, e);

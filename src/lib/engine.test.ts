@@ -150,3 +150,26 @@ describe("normalizeIgnav", () => {
     expect(normalizeIgnav({ outbound: { segments: [seg("GOT", "COK", "a", "b", 1)] } })).toBeNull();
   });
 });
+
+describe("itinerary filters", () => {
+  it("skips flights over 36 hours and counts bags priced in by the provider", async () => {
+    const slice = (s: SliceQuery, mins: number, bags: number) => ({ origin: s.origin, destination: s.destination, departAt: "", arriveAt: "", durationMin: mins, stops: 1, via: ["DOH"], carriers: ["X"], checkedBags: bags });
+    const p: FlightProvider = {
+      name: "mock",
+      async search(slices, opts) {
+        const bags = opts?.checkedBags ?? 0;
+        return [
+          { id: "slow", price: 100, currency: "EUR", owner: "X", source: "mock", slices: slices.map((s) => slice(s, 62 * 60, bags)) },
+          { id: "ok", price: 300, currency: "EUR", owner: "X", source: "mock", slices: slices.map((s) => slice(s, 20 * 60, bags)) },
+        ];
+      },
+    };
+    const r = await runSearch({ ...base, origins: ["CPH"], dests: ["COK"], mix: false, bags: 2 }, p);
+    expect(r.trips.every((t) => t.out.slice.durationMin === 1200)).toBe(true);
+    expect(r.trips.every((t) => t.bagFee === 0)).toBe(true);
+  });
+  it("Ignav normalizer trusts requested bags", () => {
+    const o = normalizeIgnav({ price: { amount: 1, currency: "SEK" }, outbound: { duration_minutes: 60, segments: [{ departure_airport: "A", arrival_airport: "B", duration_minutes: 60 }] } }, 2)!;
+    expect(o.slices[0].checkedBags).toBe(2);
+  });
+});

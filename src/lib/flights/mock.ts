@@ -1,5 +1,5 @@
 import { airport, haversineKm } from "../places";
-import { FlightProvider, Offer, OfferSlice, SliceQuery } from "./types";
+import { FlightProvider, Offer, OfferSlice, SearchOpts, SliceQuery } from "./types";
 
 // Deterministic fake fares for development and demos. Prices are in EUR and
 // loosely follow distance, hub, season and day of week. They are NOT real.
@@ -58,7 +58,7 @@ function mockSlice(q: SliceQuery, seed: string): { slice: OfferSlice; price: num
 export class MockProvider implements FlightProvider {
   name = "mock" as const;
 
-  async search(slices: SliceQuery[], opts: { maxResults?: number } = {}): Promise<Offer[]> {
+  async search(slices: SliceQuery[], opts: SearchOpts = {}): Promise<Offer[]> {
     const n = Math.min(opts.maxResults ?? 3, 3);
     const offers: Offer[] = [];
     for (let i = 0; i < n; i++) {

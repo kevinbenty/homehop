@@ -1,4 +1,4 @@
-import { FlightProvider, Offer, OfferSlice, SliceQuery } from "./types";
+import { FlightProvider, Offer, OfferSlice, SearchOpts, SliceQuery } from "./types";
 
 const API = "https://api.duffel.com/air/offer_requests";
 
@@ -52,7 +52,7 @@ export class DuffelProvider implements FlightProvider {
   name = "duffel" as const;
   constructor(private token: string) {}
 
-  async search(slices: SliceQuery[], opts: { maxResults?: number } = {}): Promise<Offer[]> {
+  async search(slices: SliceQuery[], opts: SearchOpts = {}): Promise<Offer[]> {
     const res = await fetch(`${API}?return_offers=true&supplier_timeout=15000`, {
       method: "POST",
       headers: {

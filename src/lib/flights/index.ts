@@ -1,7 +1,7 @@
 import { DuffelProvider } from "./duffel";
 import { IgnavProvider } from "./ignav";
 import { MockProvider } from "./mock";
-import { FlightProvider, Offer, SliceQuery } from "./types";
+import { FlightProvider, Offer, SearchOpts, SliceQuery } from "./types";
 
 export * from "./types";
 
@@ -25,15 +25,16 @@ export function sharedProvider(): FlightProvider {
   return shared;
 }
 
-export async function cachedSearch(provider: FlightProvider, slices: SliceQuery[]): Promise<Offer[]> {
+export async function cachedSearch(provider: FlightProvider, slices: SliceQuery[], opts: SearchOpts = {}): Promise<Offer[]> {
+  const o = { maxResults: 10, ...opts };
   // Only the shared provider is cached; ad-hoc providers (tests, scripts) always hit the source.
-  if (provider !== shared) return provider.search(slices, { maxResults: 5 });
+  if (provider !== shared) return provider.search(slices, o);
   if (!caches.has(provider.name)) caches.set(provider.name, new Map());
   const cache = caches.get(provider.name)!;
-  const key = slices.map((s) => `${s.origin}-${s.destination}-${s.date}`).join("|");
+  const key = `bags${o.checkedBags ?? 0}|` + slices.map((s) => `${s.origin}-${s.destination}-${s.date}`).join("|");
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.offers;
-  const offers = await provider.search(slices, { maxResults: 5 });
+  const offers = await provider.search(slices, o);
   cache.set(key, { at: Date.now(), offers });
   if (cache.size > 2000) {
     const oldest = [...cache.entries()].sort((a, b) => a[1].at - b[1].at).slice(0, 500);
