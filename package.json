@@ -9,7 +9,9 @@
     "lint": "eslint",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "migrate": "node scripts/migrate.mjs",
+    "vercel-build": "node scripts/migrate.mjs && next build"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

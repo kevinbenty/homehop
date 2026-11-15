@@ -37,10 +37,10 @@ npm run dev
 
 With no `DUFFEL_ACCESS_TOKEN` the site runs on **demo fares** (clearly labelled), so you can try everything without any keys. Accounts and alerts need `DATABASE_URL`, `AUTH_SECRET` and `AUTH_RESEND_KEY`.
 
-Create the database tables (drizzle-kit doesn't read `.env.local`, so pass the URL):
+Create the database tables (also runs automatically before every Vercel build):
 
 ```bash
-DATABASE_URL=postgres://... npm run db:migrate
+DATABASE_URL=postgres://... npm run migrate
 ```
 
 Tests: `npm test`
@@ -50,7 +50,7 @@ Tests: `npm test`
 1. Import this repo in Vercel.
 2. Add a Postgres database (e.g. Neon from the Vercel Marketplace). It sets `DATABASE_URL`.
 3. Set the other variables from `.env.example`.
-4. Run `npm run db:migrate` once against the production database.
+4. Tables are created automatically: the `vercel-build` script runs `scripts/migrate.mjs` before `next build`.
 5. `vercel.json` schedules the alert check daily at 05:17 UTC. Vercel sends `CRON_SECRET` with each call.
 
 ## Getting real prices
