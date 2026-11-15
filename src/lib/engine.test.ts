@@ -122,3 +122,31 @@ describe("defaultAirports", () => {
     expect(defaultAirports(findCity("thrissur")!, 550, 6).sort()).toEqual(["BLR", "CCJ", "COK", "MAA", "TRV"]);
   });
 });
+
+import { normalizeIgnav } from "./flights/ignav";
+
+describe("normalizeIgnav", () => {
+  const seg = (from: string, to: string, dep: string, arr: string, mins: number) => ({
+    marketing_carrier_code: "QR", flight_number: "1", operating_carrier_name: "Qatar Airways",
+    departure_airport: from, departure_time_local: dep, arrival_airport: to, arrival_time_local: arr, duration_minutes: mins,
+  });
+  it("reads round-trip outbound/inbound legs and bags", () => {
+    const o = normalizeIgnav({
+      price: { amount: 6123, currency: "SEK", status: "verified" },
+      outbound: { carrier: "QR", duration_minutes: 700, segments: [seg("CPH", "DOH", "2026-12-19T15:00", "2026-12-19T23:00", 360), seg("DOH", "COK", "2026-12-20T02:00", "2026-12-20T09:00", 280)] },
+      inbound: { carrier: "QR", duration_minutes: 820, segments: [seg("COK", "DOH", "2027-01-11T04:00", "2027-01-11T06:30", 300), seg("DOH", "CPH", "2027-01-11T08:00", "2027-01-11T13:00", 400)] },
+      bags: { carry_on: 1, checked: 2 },
+      ignav_id: "abc",
+    })!;
+    expect(o.price).toBe(6123);
+    expect(o.slices).toHaveLength(2);
+    expect(o.slices[0]).toMatchObject({ origin: "CPH", destination: "COK", stops: 1, via: ["DOH"], durationMin: 700, checkedBags: 2 });
+    expect(o.slices[1]).toMatchObject({ origin: "COK", destination: "CPH" });
+  });
+  it("reads open-jaw legs and rejects missing prices", () => {
+    const o = normalizeIgnav({ price: { amount: 5000, currency: "SEK" }, legs: [{ duration_minutes: 600, segments: [seg("GOT", "COK", "a", "b", 600)] }, { duration_minutes: 600, segments: [seg("TRV", "ARN", "c", "d", 600)] }] })!;
+    expect(o.slices.map((s) => s.origin + s.destination)).toEqual(["GOTCOK", "TRVARN"]);
+    expect(o.slices[0].checkedBags).toBe(0);
+    expect(normalizeIgnav({ outbound: { segments: [seg("GOT", "COK", "a", "b", 1)] } })).toBeNull();
+  });
+});

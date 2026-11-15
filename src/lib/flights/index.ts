@@ -1,13 +1,16 @@
 import { DuffelProvider } from "./duffel";
+import { IgnavProvider } from "./ignav";
 import { MockProvider } from "./mock";
 import { FlightProvider, Offer, SliceQuery } from "./types";
 
 export * from "./types";
 
+/** Picks the fare source: Ignav, then Duffel, else labelled demo fares. */
 export function getProvider(): FlightProvider {
-  const token = process.env.DUFFEL_ACCESS_TOKEN;
-  if (!token || process.env.MOCK_FLIGHTS === "1") return new MockProvider();
-  return new DuffelProvider(token);
+  if (process.env.MOCK_FLIGHTS === "1") return new MockProvider();
+  if (process.env.IGNAV_API_KEY) return new IgnavProvider(process.env.IGNAV_API_KEY, process.env.IGNAV_MARKET || "SE");
+  if (process.env.DUFFEL_ACCESS_TOKEN) return new DuffelProvider(process.env.DUFFEL_ACCESS_TOKEN);
+  return new MockProvider();
 }
 
 // In-memory cache per server instance. Fares move, so keep it short.

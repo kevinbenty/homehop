@@ -14,7 +14,7 @@ Normal flight sites search one airport to one airport. A student in Gothenburg g
 
 ## Stack
 
-Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · [Duffel](https://duffel.com) flight API · Auth.js (email magic links via Resend) · Drizzle ORM + Postgres · Vercel Cron · Vitest
+Next.js 15 (App Router) · TypeScript · Tailwind CSS 4 · [Ignav](https://ignav.com) or [Duffel](https://duffel.com) flight APIs · Auth.js (email magic links via Resend) · Drizzle ORM + Postgres · Vercel Cron · Vitest
 
 ## How the search works
 
@@ -35,7 +35,7 @@ cp .env.example .env.local   # fill in what you have
 npm run dev
 ```
 
-With no `DUFFEL_ACCESS_TOKEN` the site runs on **demo fares** (clearly labelled), so you can try everything without any keys. Accounts and alerts need `DATABASE_URL`, `AUTH_SECRET` and `AUTH_RESEND_KEY`.
+With no flight API key the site runs on **demo fares** (clearly labelled), so you can try everything without any keys. Accounts and alerts need `DATABASE_URL`, `AUTH_SECRET` and `AUTH_RESEND_KEY`.
 
 Create the database tables (also runs automatically before every Vercel build):
 
@@ -55,9 +55,12 @@ Tests: `npm test`
 
 ## Getting real prices
 
-1. Sign up at duffel.com. You get a test token straight away (`duffel_test_…`). Test mode returns **fake** prices.
-2. To see real fares, switch off test mode in the dashboard and complete the account verification. Then create a live token (`duffel_live_…`).
-3. Duffel charges per search above its search-to-book ratio, so keep the per-IP limit (`SEARCHES_PER_HOUR`) and the 150-lookup cap in place.
+HomeHop picks its fare source from environment variables: **Ignav** if `IGNAV_API_KEY` is set, otherwise **Duffel** if `DUFFEL_ACCESS_TOKEN` is set, otherwise labelled demo fares.
+
+- **Ignav** (recommended): self-serve, no company needed. Sign up at ignav.com, copy the API key, and set `IGNAV_API_KEY`. The first 1,000 requests are free, then $2 per 1,000. A default search (4 × 5 airports, exact dates, mixing on) makes about 47 requests, so it costs roughly $0.09. `IGNAV_MARKET` (default `SE`) sets the pricing country and currency.
+- **Duffel**: live prices need an activated account, which requires a registered business. Test tokens return fake prices.
+
+Keep the per-IP limit (`SEARCHES_PER_HOUR`) and the 150-lookup cap in place to control cost.
 
 ## Limits and next steps
 

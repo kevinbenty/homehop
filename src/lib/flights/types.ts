@@ -23,11 +23,11 @@ export interface Offer {
   currency: string;
   owner: string;
   slices: OfferSlice[];
-  source: "duffel" | "mock";
+  source: "ignav" | "duffel" | "mock";
 }
 
 export interface FlightProvider {
-  name: "duffel" | "mock";
+  name: "ignav" | "duffel" | "mock";
   /** Returns the cheapest offers for the given slices, cheapest first. */
   search(slices: SliceQuery[], opts?: { maxResults?: number }): Promise<Offer[]>;
 }

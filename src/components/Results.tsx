@@ -74,7 +74,7 @@ export default function Results({ input, q, signedIn }: { input: SearchInput; q:
       {data && (
         <>
           {data.provider === "mock" && (
-            <p className="rounded-xl bg-warm px-4 py-3 text-sm font-semibold text-warm-ink">Demo mode: these are sample fares, not live prices. Add a Duffel live token to see real fares.</p>
+            <p className="rounded-xl bg-warm px-4 py-3 text-sm font-semibold text-warm-ink">Demo mode: these are sample fares, not live prices.</p>
           )}
           {data.baseline && sorted.length > 0 && data.baseline.total - sorted[0].total > 1 && sort === "cheap" && (
             <div className="rounded-xl border border-[#b5dad7] bg-accent-soft px-4 py-3.5 text-[15px] text-[#0b3d3b]">
@@ -100,7 +100,7 @@ export default function Results({ input, q, signedIn }: { input: SearchInput; q:
             <Matrix data={data} />
           </div>
           <p className="text-xs text-muted">
-            {data.callsMade} lookups via {data.provider === "duffel" ? "Duffel" : "demo data"}. Currency rates: {data.fxLive ? "ECB daily" : "approximate fallback"}.
+            {data.callsMade} lookups via {data.provider === "ignav" ? "Ignav" : data.provider === "duffel" ? "Duffel" : "demo data"}. Currency rates: {data.fxLive ? "ECB daily" : "approximate fallback"}.
           </p>
         </>
       )}
