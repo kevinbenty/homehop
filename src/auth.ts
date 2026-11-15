@@ -8,7 +8,8 @@ import { db } from "@/lib/db";
 // Needs AUTH_SECRET, AUTH_RESEND_KEY, EMAIL_FROM and DATABASE_URL.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, { usersTable: users, accountsTable: accounts, sessionsTable: sessions, verificationTokensTable: verificationTokens }),
-  providers: [Resend({ from: process.env.EMAIL_FROM ?? "HomeHop <onboarding@resend.dev>" })],
+  // AUTH_RESEND_KEY, or RESEND_API_KEY as set by Vercel's Resend integration.
+  providers: [Resend({ apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY, from: process.env.EMAIL_FROM ?? "HomeHop <onboarding@resend.dev>" })],
   pages: { signIn: "/signin", verifyRequest: "/signin/check-email" },
   trustHost: true,
 });
